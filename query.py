@@ -6,6 +6,7 @@ __author__ = 'simon'
 
 import drivers.base
 
+
 def query_items(driver, options):
     """
     Query items from a certain auction site.
@@ -18,13 +19,12 @@ def query_items(driver, options):
     The allowed options depend on the formatter.
     The item_name is a mandatory option!
 
-    :return: json-list of items matching the query.
+    :return: list of AuctionItems objects based on result of the query.
+    Can be empty if none were found.
     """
-    formatter = driver.get_formatter()
-
     # TODO perform query
     # item_name is a mandatory option!!!
-    options = drivers.base.QueryOptions(item_name="ps4", min_price=150, max_price=275)
-    query_url = formatter(options)
+    query_url = driver.format(options)
+
     return None
 

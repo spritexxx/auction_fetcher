@@ -7,7 +7,10 @@ __author__ = 'simon'
 
 
 def find_driver(url):
-    # put url in proper format
+    """
+    Find a supporting driver for the auction site with specified url.
+    :rtype : class of the supporting driver
+    """
     name = "_" + url.replace(".", "_")
 
     cls = drivers.supported_drivers.get(name, None)
@@ -17,8 +20,7 @@ def find_driver(url):
 def main():
     # TODO options for the runner, how long it runs etc... How much time between queries...
     # TODO non-hardcoded url & options in future
-
-    driver_class = find_driver("ebay.be")
+    driver_class = find_driver("2dehands.be")
 
     if driver_class is None:
         logging.error("error - this site is not yet supported...")
@@ -27,7 +29,9 @@ def main():
 
     driver = driver_class()
 
-    items = query.query_items(driver, None)
+    # specify options for this query
+    options = drivers.base.QueryOptions(item_name="ps4", min_price=150, max_price=275, unsupported_option=1)
+    items = query.query_items(driver, options)
     if items is not None:
         print("Nice we have found some data")
         # TODO check if we have parser for this url
