@@ -24,8 +24,7 @@ def main():
 
     if driver_class is None:
         logging.error("error - this site is not yet supported...")
-    else:
-        print("got driver!")
+        return
 
     driver = driver_class()
 

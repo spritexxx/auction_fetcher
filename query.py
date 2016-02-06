@@ -4,16 +4,13 @@ Query Module
 """
 __author__ = 'simon'
 
+import urllib2
 import drivers.base
 
 
 def query_items(driver, options):
     """
     Query items from a certain auction site.
-
-    :param url: url of the auction site (drop www or http(s)://).
-    Based on this url a formatter function will be searched in the format DB.
-    A formatter can create the correct query function that contains the specified options.
 
     :param options: QueryOptions to be passed in the query.
     The allowed options depend on the formatter.
@@ -22,9 +19,9 @@ def query_items(driver, options):
     :return: list of AuctionItems objects based on result of the query.
     Can be empty if none were found.
     """
-    # TODO perform query
     # item_name is a mandatory option!!!
-    query_url = driver.format(options)
-
-    return None
+    unparsed_data = driver.perform_query(options)
+    # let the driver parse the data
+    items = driver.parse_response(unparsed_data)
+    return items
 
