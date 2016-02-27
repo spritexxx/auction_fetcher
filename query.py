@@ -6,7 +6,7 @@ __author__ = 'simon'
 
 import urllib2
 import drivers.base
-
+import logging
 
 def query_items(driver, options):
     """
@@ -21,7 +21,13 @@ def query_items(driver, options):
     """
     # item_name is a mandatory option!!!
     unparsed_data = driver.perform_query(options)
-    # let the driver parse the data
-    items = driver.parse_response(unparsed_data)
+    if unparsed_data is not None:
+        logging.info("Got a response, parsing...")
+        # let the driver parse the data
+        items = driver.parse_response(unparsed_data)
+    else:
+        items = None
+        logging.warning("Response was none...")
+
     return items
 

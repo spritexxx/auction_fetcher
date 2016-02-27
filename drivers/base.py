@@ -16,8 +16,45 @@ class QueryOptions:
         self.__dict__.update(kwds)
 
 
-class AuctionItems(object):
-    pass
+class Vendor(object):
+    """
+    Models a vendor of an AuctionItem
+    """
+
+    def __init__(self):
+        self.name = ""
+        self.email = ""
+        self.phone_number = ""
+
+
+class AuctionItem(object):
+    """
+    Models an auction item.
+
+    Items from auction sites should be parsed into objects of this class for
+    easy usage elsewhere.
+    """
+
+    def __init__(self):
+        self.unique_id = ""
+        self.url = ""
+
+        self.title = ""
+        # save this as a string because some sites have string prices
+        # e.g 'prijs overeen te komen' on 2dehands.be
+        self.price = ""
+        self.description = ""
+
+        # fill in if found...
+        self.vendor = None
+
+    def to_string(self):
+        string = "Title: " + self.title + "\n"
+        string = string + "URL: " + self.url + "\n"
+        string = string + "Price: " + self.price + "\n"
+        string = string + "Description: " + self.description + "\n"
+        # nobody cares about the id
+        return string
 
 
 class _AuctionSite(object):

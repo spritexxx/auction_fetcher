@@ -29,15 +29,15 @@ def main():
     driver = driver_class()
 
     # specify options for this query
-    options = drivers.base.QueryOptions(item_name="ps4", min_price=150, max_price=275, unsupported_option=1)
+    options = drivers.base.QueryOptions(item_name="iphone 6s", min_price=400, max_price=700, unsupported_option=1)
     items = query.query_items(driver, options)
     if items is not None:
-        print("Nice we have found some data")
-        # TODO check if we have parser for this url
-        # TODO invoke parser if we have one!
+        # TODO invoke actuator
+        print("Found some items: \n")
+        for item in items:
+            print(item.to_string())
     else:
         print("Oops, no results...")
-        # TODO invoke actuator
 
 
 if __name__ == "__main__":
