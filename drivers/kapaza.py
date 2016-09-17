@@ -1,5 +1,6 @@
 __author__ = 'simon'
-import base
+
+from drivers import base
 
 
 class _kapaza_be(base._AuctionSite):

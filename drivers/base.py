@@ -4,7 +4,6 @@ Contains base classes for the drivers.
 __author__ = 'simon'
 
 import logging
-import urllib2
 
 
 class QueryOptions:
@@ -85,6 +84,7 @@ class _AuctionSite(object):
         resulting query url returned by this function:
         www.2dehands.be/search/ps4/? (this is just an example, this depends on the site's API!)
 
+        :param url: url onto which to append the value
         :param value: item name's value that should be added in the query url
         :return: updated query url that is capable of querying items with the specified value
         """
@@ -115,7 +115,7 @@ class _AuctionSiteUsingGET(_AuctionSite):
         if options is None:
             raise SystemError("options cannot be None, need at least the item_name option")
 
-        if not options.__dict__.has_key("item_name"):
+        if "item_name" not in options.__dict__:
             raise KeyError("missing mandatory item_name option!")
 
         for option in options.__dict__.keys():
@@ -124,10 +124,9 @@ class _AuctionSiteUsingGET(_AuctionSite):
                 method = getattr(self, "add_option_" + option)
                 query_url = method(query_url, options.__dict__[option])
             except AttributeError as e:
-                logging.warning(e.message)
+                logging.warning(str(e))
 
         return query_url
 
     def perform_query(self, options):
         raise NotImplementedError("driver MUST implement this")
-

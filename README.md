@@ -1,4 +1,11 @@
 # Auction Fetcher
+
+Requirements
+-------------
+python 3
+
+Description
+------------
 Python app that allows you to monitor auction sites for items that you are interested in.
 
 Note: this is still in development and is still in its baby feet. It does not work yet and the architecture might (will) change over time...

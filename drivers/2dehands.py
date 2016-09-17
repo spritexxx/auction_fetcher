@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 __author__ = 'simon'
 
-import base
 import logging
-import urllib2
 import re
+
+import urllib.request
+
 from pyquery import PyQuery
+from drivers import base
+
 
 class _2dehands_be(base._AuctionSiteUsingGET):
     SEARCH_ITEM = "/markt/2/"
@@ -23,15 +26,14 @@ class _2dehands_be(base._AuctionSiteUsingGET):
     def perform_query(self, options):
         query_url = self.create_GET_query(options)
         print("Created GET query url: {0}".format(query_url))
-        req = urllib2.Request(query_url)
+        req = urllib.request.Request(query_url)
 
-        response = urllib2.urlopen(req)
-        if response is not None:
+        with urllib.request.urlopen(req) as response:
             the_page = response.read()
             return the_page
-        else:
-            logging.info("Response was None...")
-            return None
+
+        logging.error("query failed for %s..." % query_url)
+        return None
 
     def parse_article(self, html):
         """
@@ -66,8 +68,9 @@ class _2dehands_be(base._AuctionSiteUsingGET):
         for article in articles:
             # get html for the article
             url = article.attrib['href']
-            req = urllib2.Request(url)
-            response = urllib2.urlopen(req)
+
+            req = urllib.request.Request(url)
+            response = urllib.request.urlopen(req)
             if response is None:
                 continue
 
@@ -89,10 +92,10 @@ class _2dehands_be(base._AuctionSiteUsingGET):
         value = re.sub(' ', '%20', value)
         return value
 
-
     """
     Functions to support query options
     """
+
     def add_option_item_name(self, url, value):
         return url + self.SEARCH_ITEM + self.encode_value(value) + self.LOCALE_INFO
 

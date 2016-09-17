@@ -4,9 +4,9 @@ Query Module
 """
 __author__ = 'simon'
 
-import urllib2
-import drivers.base
 import logging
+
+from drivers import base
 
 def query_items(driver, options):
     """
