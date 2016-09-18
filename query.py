@@ -22,12 +22,12 @@ def query_items(driver, options):
     # item_name is a mandatory option!!!
     unparsed_data = driver.perform_query(options)
     if unparsed_data is not None:
-        logging.info("Got a response, parsing...")
+        logging.info("got a response, parsing...")
         # let the driver parse the data
         items = driver.parse_response(unparsed_data)
     else:
         items = None
-        logging.warning("Response was none...")
+        logging.warning("response was none...")
 
     return items
 

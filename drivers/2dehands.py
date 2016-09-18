@@ -22,6 +22,7 @@ class _2dehands_be(base._AuctionSite):
 
     def __init__(self):
         self.base_url = "http://www.2dehands.be"
+        self.logger = logging.getLogger("2dehands-driver")
 
     def create_GET_query(self, options):
         """
@@ -52,20 +53,20 @@ class _2dehands_be(base._AuctionSite):
                 method = getattr(self, "add_option_" + option)
                 query_url = method(query_url, options.__dict__[option])
             except AttributeError as e:
-                logging.warning(str(e))
+                self.logger.warning(str(e))
 
         return query_url
 
     def perform_query(self, options):
         query_url = self.create_GET_query(options)
-        print("Created GET query url: {0}".format(query_url))
+        self.logger.info("created GET query url: {0}".format(query_url))
         req = urllib.request.Request(query_url)
 
         with urllib.request.urlopen(req) as response:
             the_page = response.read()
             return the_page
 
-        logging.error("query failed for %s..." % query_url)
+        self.logger.error("query failed for %s..." % query_url)
         return None
 
     def parse_article(self, html):
@@ -97,7 +98,7 @@ class _2dehands_be(base._AuctionSite):
         pq = PyQuery(search_div)
         articles = pq('article>div>a')
         # TODO multiple pages containing results
-        logging.info("Found {0} articles.".format(len(articles)))
+        self.logger.info("found {0} articles.".format(len(articles)))
         for article in articles:
             # get html for the article
             url = article.attrib['href']
