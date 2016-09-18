@@ -10,7 +10,7 @@ from pyquery import PyQuery
 from drivers import base
 
 
-class _2dehands_be(base._AuctionSiteUsingGET):
+class _2dehands_be(base._AuctionSite):
     SEARCH_ITEM = "/markt/2/"
     LOCALE_INFO = "/?locale=nl&p=be"
     PRICE_MIN = "&prijsmin="
@@ -22,6 +22,39 @@ class _2dehands_be(base._AuctionSiteUsingGET):
 
     def __init__(self):
         self.base_url = "http://www.2dehands.be"
+
+    def create_GET_query(self, options):
+        """
+        The create_GET_query method is able to create a query URL for this site based on passed options.
+        Note that this only works for auction sites in which queries are done using GET.
+        Subclasses must not implement this class.
+
+        :return: a URL that should be queried by the query engine.
+        """
+        query_url = self.base_url
+        if options is None:
+            raise SystemError("options cannot be None, need at least the item_name option")
+
+        if "item_name" not in options.__dict__:
+            raise KeyError("missing mandatory item_name option!")
+        else:
+            # add this first!
+            query_url = self.add_option_item_name(query_url, options.__dict__["item_name"])
+
+        # this part assumes that option ordering in the URL does not matter!
+        for option in options.__dict__.keys():
+            try:
+                # this one's already added
+                if option == "item_name":
+                    continue
+
+                # check if function is supported
+                method = getattr(self, "add_option_" + option)
+                query_url = method(query_url, options.__dict__[option])
+            except AttributeError as e:
+                logging.warning(str(e))
+
+        return query_url
 
     def perform_query(self, options):
         query_url = self.create_GET_query(options)

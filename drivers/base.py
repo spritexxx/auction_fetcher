@@ -3,9 +3,6 @@ Contains base classes for the drivers.
 """
 __author__ = 'simon'
 
-import logging
-
-
 class QueryOptions:
     """
     Models
@@ -96,37 +93,3 @@ class _AuctionSite(object):
         :return: an AuctionItems object or None in case there were none.
         """
         raise NotImplementedError("actual driver MUST implement this function")
-
-
-class _AuctionSiteUsingGET(_AuctionSite):
-    """
-    Base class containing common functionality for Auction Sites that perform their lookups using HTTP GET.
-    """
-
-    def create_GET_query(self, options):
-        """
-        The create_GET_query method is able to create a query URL for this site based on passed options.
-        Note that this only works for auction sites in which queries are done using GET.
-        Subclasses must not implement this class.
-
-        :return: a URL that should be queried by the query engine.
-        """
-        query_url = self.base_url
-        if options is None:
-            raise SystemError("options cannot be None, need at least the item_name option")
-
-        if "item_name" not in options.__dict__:
-            raise KeyError("missing mandatory item_name option!")
-
-        for option in options.__dict__.keys():
-            try:
-                # check if function is supported
-                method = getattr(self, "add_option_" + option)
-                query_url = method(query_url, options.__dict__[option])
-            except AttributeError as e:
-                logging.warning(str(e))
-
-        return query_url
-
-    def perform_query(self, options):
-        raise NotImplementedError("driver MUST implement this")

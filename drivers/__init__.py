@@ -19,6 +19,3 @@ for (module_loader, name, ispkg) in pkgutil.iter_modules([pkg_dir]):
     importlib.import_module('.' + name, __package__)
 
 supported_drivers = {cls.__name__: cls for cls in base._AuctionSite.__subclasses__()}
-
-for cls in base._AuctionSiteUsingGET.__subclasses__():
-    supported_drivers[cls.__name__] = cls
