@@ -66,8 +66,8 @@ def main():
     while infinite or args.count > 0:
         args.count -= 1
         items = query.query_items(driver, options)
-        if items is not None:
-            logging.info("found some items: \n")
+        if items is not None and len(items) > 0:
+            logging.info("listing found items: \n")
             for item in items:
                 logging.info(item.to_string())
 

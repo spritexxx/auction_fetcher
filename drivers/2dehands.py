@@ -12,9 +12,11 @@ from drivers import base
 
 class _2dehands_be(base._AuctionSite):
     SEARCH_ITEM = "/markt/2/"
-    LOCALE_INFO = "/?locale=nl&p=be"
+    LOCALE_INFO = "/?locale=all&p=be"
     PRICE_MIN = "&prijsmin="
     PRICE_MAX = "&prijsmax="
+    SORT_DATE_ASC = "&sort=datum_asc"
+    SORT_DATE_DESC = "&sort=datum_desc"
 
     """
     Class for the auction site www.2dehands.be
@@ -57,24 +59,15 @@ class _2dehands_be(base._AuctionSite):
 
         return query_url
 
-    def perform_query(self, options):
-        query_url = self.create_GET_query(options)
-        self.logger.info("created GET query url: {0}".format(query_url))
-        req = urllib.request.Request(query_url)
-
-        with urllib.request.urlopen(req) as response:
-            the_page = response.read()
-            return the_page
-
-        self.logger.error("query failed for %s..." % query_url)
-        return None
-
-    def parse_article(self, html):
+    @staticmethod
+    def parse_article_page(html, item):
         """
-        Parse html of an article.
+        Parse html of an article entry in the query result page.
         If this fails for some reason, return None so that the user is not bothered with it.
+        :param html: portion that contains article info.
+        :param item: AuctionItem that will contain parsed data.
+        :return: True if parse was successful, False if not.
         """
-        item = base.AuctionItem()
         # parse out the bullshit
         pq = PyQuery(html)
         div_item = pq('div#item-id.item')
@@ -85,39 +78,102 @@ class _2dehands_be(base._AuctionSite):
         item.price = pq('span.price').text()
         item.description = pq('div.item-details').text()
 
-        return item
+        return True
 
-    def parse_response(self, response):
+    @staticmethod
+    def get_num_pages_and_offset(html):
+        pq = PyQuery(html)
+
+        # get number of pages in search result
+        pages_div = pq('ul.page-count>li')
+        if pages_div is None or len(pages_div) <= 0:
+            logging.warning("could not get page count or is 0")
+            return [0, 0]
+
+        if len(pages_div) == 1:
+            # offset doesn't matter in this case
+            return [1, 0]
+
+        # if more than 1 we need the offset
+        pq = PyQuery(pages_div[1])
+        a = pq('a')
+        offset_href = a[0].attrib['href']
+        if not offset_href:
+            return [0, 0]
+        else:
+            offset_array = offset_href.split('=')
+            offset = int(offset_array[-1]) if offset_array else 0
+
+        # also get num pages
+        pq = PyQuery(pages_div[-1])
+        a = pq('a')
+        num_pages = int(a.text())
+
+        return [num_pages, offset]
+
+    @staticmethod
+    def parse_response_page(html):
         """
         2dehands.be sends back a html object.
         We can parse it in this function.
+        :type html: html data
         """
         items = []
-        pq = PyQuery(response)
+
+        pq = PyQuery(html)
         search_div = pq('div.search-result')
         pq = PyQuery(search_div)
         articles = pq('article>div>a')
-        # TODO multiple pages containing results
-        self.logger.info("found {0} articles.".format(len(articles)))
         for article in articles:
+            item = base.AuctionItem()
             # get html for the article
             url = article.attrib['href']
 
             req = urllib.request.Request(url)
-            response = urllib.request.urlopen(req)
-            if response is None:
+            html = urllib.request.urlopen(req)
+            if html is None:
                 continue
 
-            item = self.parse_article(response.read())
-            # if it was successfully parsed
-            if item is not None:
+            if _2dehands_be.parse_article_page(html.read(), item):
                 # fill in the url
                 item.url = url
                 # magic to find the id
                 end = url.rfind('.html')
                 begin = url.rfind('-') + 1
-                item.unique_id = url[begin:end]
+                item.id = url[begin:end]
                 items.append(item)
+
+        return items
+
+    def perform_query(self, options):
+        items = []
+        query_url = self.create_GET_query(options)
+        self.logger.info("created GET query url: {0}".format(query_url))
+        req = urllib.request.Request(query_url)
+
+        with urllib.request.urlopen(req) as response:
+            the_page = response.read()
+
+            values = self.get_num_pages_and_offset(the_page)
+            pages = values[0]
+            offset = values[1]
+            self.logger.info("pages found: %d - offset: %d" % (pages, offset))
+
+            # no pages means no items found...
+            if pages == 0:
+                return items
+
+            # parse page 1
+            page_items = self.parse_response_page(the_page)
+            if page_items is not None:
+                items += page_items
+                self.logger.info("found %d items on page" % len(page_items))
+            else:
+                self.logger.warning("unable to parse page for %s" % query_url)
+
+        if pages > 1 and offset > 0:
+            # TODO implement extra pages fetching
+            self.logger.warning("more pages available!!")
 
         return items
 
@@ -138,3 +194,10 @@ class _2dehands_be(base._AuctionSite):
 
     def add_option_max_price(self, url, value):
         return url + self.PRICE_MAX + str(value)
+
+    # if this option is supported, a smart query can be done!
+    def add_option_sort_date_asc(self, url):
+        return url + self.SORT_DATE_ASC
+
+    def add_option_sort_date_desc(self, url):
+        return url + self.SORT_DATE_DESC

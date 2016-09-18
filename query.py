@@ -6,8 +6,6 @@ __author__ = 'simon'
 
 import logging
 
-from drivers import base
-
 def query_items(driver, options):
     """
     Query items from a certain auction site.
@@ -20,14 +18,11 @@ def query_items(driver, options):
     Can be empty if none were found.
     """
     # item_name is a mandatory option!!!
-    unparsed_data = driver.perform_query(options)
-    if unparsed_data is not None:
-        logging.info("got a response, parsing...")
-        # let the driver parse the data
-        items = driver.parse_response(unparsed_data)
-    else:
-        items = None
+    items = driver.perform_query(options)
+    if items is None:
         logging.warning("response was none...")
+        return items
 
+    # TODO weed out items that have been reported already
     return items
 
