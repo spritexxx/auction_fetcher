@@ -7,7 +7,11 @@ from hashlib import md5
 
 class QueryOptions:
     """
-    Models
+    Models options that can be given to a Query.
+    TODO: standardize option names but keep open for extra options.
+    Drivers must be able to handle these options but they do not
+    need to support all options. If an unsupported option is passed to a driver it
+    may simply ignore it and print a warning.
     """
 
     def __init__(self, **kwds):
@@ -80,10 +84,11 @@ class _AuctionSite(object):
     See 2dehands.py for an example of a driver implementing this interface.
     """
 
-    def perform_query(self, options):
+    def perform_query(self, options, max_items=100):
         """
         Perform a query to obtain the unparsed items matching the query incl. options.
         :param options: options for the query.
-        :return:
+        :param max_items: max AuctionItems that are queried/returned.
+        :return: list of AuctionItems. An empty list is returned in case none where found.
         """
         raise NotImplementedError("actual driver must implement this function")

@@ -3,6 +3,7 @@ import argparse
 
 import drivers
 import query
+import time
 
 __author__ = 'simon'
 
@@ -31,6 +32,7 @@ def read_arguments():
     # search options
     parser.add_argument('-o', '--options', type=str, help='comma separated list of options in the opt=value format')
     parser.add_argument('-c', '--count', type=int, default=0, help='number of cycles to perform, 0 means infinite')
+    parser.add_argument('-s', '--sleep', type=int, default=60, help='number of seconds to sleep between query cycles')
 
     parser.add_argument('--log', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="specify log level")
 
@@ -74,6 +76,9 @@ def main():
             # TODO invoke post-processor
         else:
             logging.warning("no results found")
+
+        logging.debug("sleeping %d seconds" % args.sleep)
+        time.sleep(args.sleep)
 
     logging.info("program exiting")
 

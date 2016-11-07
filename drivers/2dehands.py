@@ -17,6 +17,7 @@ class _2dehands_be(base._AuctionSite):
     PRICE_MAX = "&prijsmax="
     SORT_DATE_ASC = "&sort=datum_asc"
     SORT_DATE_DESC = "&sort=datum_desc"
+    OFFSET = "&offset="
 
     """
     Class for the auction site www.2dehands.be
@@ -112,7 +113,7 @@ class _2dehands_be(base._AuctionSite):
         return [num_pages, offset]
 
     @staticmethod
-    def parse_response_page(html):
+    def parse_html_page(html):
         """
         2dehands.be sends back a html object.
         We can parse it in this function.
@@ -145,39 +146,67 @@ class _2dehands_be(base._AuctionSite):
 
         return items
 
-    def perform_query(self, options):
-        items = []
-        query_url = self.create_GET_query(options)
-        self.logger.info("created GET query url: {0}".format(query_url))
-        req = urllib.request.Request(query_url)
+    def query_html_page(self, url):
+        """
+        Query a page with given url or return None if failed.
+        :param url: query url
+        :return: a html
+        """
+        self.logger.info("querying: %s" % url)
+        req = urllib.request.Request(url)
 
         with urllib.request.urlopen(req) as response:
             the_page = response.read()
+            return the_page
 
-            values = self.get_num_pages_and_offset(the_page)
-            pages = values[0]
-            offset = values[1]
-            self.logger.info("pages found: %d - offset: %d" % (pages, offset))
+        return None
 
-            # no pages means no items found...
-            if pages == 0:
-                return items
+    def perform_query(self, options, max_items=50):
+        items = []
+        query_url = self.create_GET_query(options)
+        self.logger.info("created GET query url: {0}".format(query_url))
 
-            # parse page 1
-            page_items = self.parse_response_page(the_page)
-            if page_items is not None:
-                items += page_items
-                self.logger.info("found %d items on page" % len(page_items))
+        # first determine how many pages with results there are
+        page = self.query_html_page(query_url)
+        if page is None:
+            return items
+
+        values = self.get_num_pages_and_offset(page)
+        pages = values[0]
+        offset = values[1]
+        self.logger.debug("pages found: %d - offset: %d" % (pages, offset))
+
+        current_page = 0
+        while current_page < pages:
+            page_url = query_url
+            # although we already queried page 1 we do it again, for ease
+            page = self.query_html_page(self.add_option_offset(page_url, current_page * offset))
+            if page is not None:
+                new_items = self.parse_html_page(page)
+                if new_items is not None:
+                    self.logger.info("found %d items on page %d" % (len(new_items), current_page + 1))
+                    left = max_items - len(items)
+
+                    if left > len(new_items):
+                        # we can add all the items
+                        items += new_items
+                    else:
+                        # need to add subset
+                        items += new_items[0:left]
+                        # add this point max items has been reached (this is why else is <=)
+                        self.logger.info("reached max items")
+                        break
+                else:
+                    self.logger.warning("no items on found for URL %s" % page_url)
             else:
-                self.logger.warning("unable to parse page for %s" % query_url)
+                self.logger.warning("page for %s was None" % page_url)
 
-        if pages > 1 and offset > 0:
-            # TODO implement extra pages fetching
-            self.logger.warning("more pages available!!")
+            current_page += 1
 
         return items
 
-    def encode_value(self, value):
+    @staticmethod
+    def encode_value(value):
         # only does space replacement for now
         value = re.sub(' ', '%20', value)
         return value
@@ -185,7 +214,6 @@ class _2dehands_be(base._AuctionSite):
     """
     Functions to support query options
     """
-
     def add_option_item_name(self, url, value):
         return url + self.SEARCH_ITEM + self.encode_value(value) + self.LOCALE_INFO
 
@@ -201,3 +229,10 @@ class _2dehands_be(base._AuctionSite):
 
     def add_option_sort_date_desc(self, url):
         return url + self.SORT_DATE_DESC
+
+    def add_option_offset(self, url, value):
+        if value == 0:
+            # not needed to include offset in url for 0 value
+            return url
+        else:
+            return url + self.OFFSET + str(value)

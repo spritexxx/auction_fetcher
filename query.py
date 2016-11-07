@@ -6,6 +6,7 @@ __author__ = 'simon'
 
 import logging
 
+
 def query_items(driver, options):
     """
     Query items from a certain auction site.
@@ -17,8 +18,12 @@ def query_items(driver, options):
     :return: list of AuctionItems objects based on result of the query.
     Can be empty if none were found.
     """
+    # E.g check for mandatory options
     # item_name is a mandatory option!!!
-    items = driver.perform_query(options)
+    # TODO better define the Query Options
+    # TODO options must be able to validate themselves!
+    # TODO remove hard-coded max_items, should be an option!
+    items = driver.perform_query(options, 25)
     if items is None:
         logging.warning("response was none...")
         return items
